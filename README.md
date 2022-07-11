@@ -6,7 +6,7 @@ Shiny Usage Monitor
 Using Shiny Server Open Source? Want to see how many people are using your apps? This app allows you to monitor the number of users on your Shiny Server by continuously parsing through your server's logs and charting the data over time.
 
 
-![demo ](https://raw.githubusercontent.com/munoztd0/shiny-usage-monitor/master/img/screen.gif)
+![demo](https://raw.githubusercontent.com/munoztd0/shiny-usage-monitor/master/img/screen.gif)
 
 
 Know thyself
