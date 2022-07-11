@@ -5,7 +5,9 @@ Shiny Usage Monitor
 
 Using Shiny Server Open Source? Want to see how many people are using your apps? This app allows you to monitor the number of users on your Shiny Server by continuously parsing through your server's logs and charting the data over time.
 
-<img src="img/screenshot.png">
+
+![demo ](https://raw.githubusercontent.com/munoztd0/shiny-usage-monitor/master/img/screen.gif)
+
 
 Know thyself
 ------------
@@ -26,7 +28,7 @@ Basic architecture
 Installation
 ------------
 
-##### 1: Add `app.R` and `check_server.R` into a new directory `/shiny-usage-monitor` in the same location as your shiny apps.
+##### 1: Add `app.R` and `server_status.R` into a new directory `/shiny-usage-monitor` in the same location as your shiny apps.
 
 For example clone this repo into /srv/shiny-server/ such as that the code would be located in /srv/shiny-server/shiny-usage-monitor
 
@@ -36,7 +38,20 @@ For example clone this repo into /srv/shiny-server/ such as that the code would 
 install.packages(c('shiny', 'tidyverse', 'lubridate', 'highcharter', 'this.path'))
 ```
 
-##### 3. Set up a cron to run `check_server.R` every minute. First, open up your crontab file as root:
+But before check that everything works. From the root directory :
+
+``` bash
+sudo Rscript server_status.R
+```
+
+Now if everything run fine without error, you can:
+``` bash
+Rscript app.R
+```
+
+##### 3. Set up a cron to run `server_status.R` every minute. First, open up your crontab file as root:
+
+Now we want to automate it.
 
 The easiest way is to create a crontab as root (but you might want to allow sudo without password for some commands to avoid that, the two commands this script requires sudo privileges is netstat and lsof)
 
@@ -48,7 +63,7 @@ crontab -e
 Then add this line to the end of the file (watch the path !)
 
 ``` bash
-* * * * *  /usr/bin/Rscript /srv/shiny-server/server_status/check_server.R
+* * * * *  /usr/bin/Rscript /srv/shiny-server/server_status.R
 ```
 
 Now you'll have real-time data on your users henceforth! You should now see a minute by minute graph for today's server usage in your `/shiny-usage-monitor` app. You can also check out `sysLoad.RData` to see the raw data.
