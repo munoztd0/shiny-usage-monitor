@@ -1,44 +1,44 @@
 library(pacman)
 
-pacman::p_load(shiny, tidyverse, lubridate, this.path, highcharter)
+suppressPackageStartupMessages(pacman::p_load(flowbankanalytics, dplyr, tidyr, shiny, DT))
 
-path <- dirname(this.path())
-
-setwd(path)
+con_hub <- flowbankanalytics::connect_data_hub()
 
 
-ui <- fluidPage(
-    titlePanel('Shiny Server Monitor'),
-    highchartOutput('user_chart_today')
-)
 
-server <- function(input, output, session) {
-    
-    filter_user_data_today <- reactive({
-        load('sysLoad.RData')
-        
-        Dat %>% 
-            mutate(hour = as.POSIXct(trunc(Time, 'mins'))) %>% 
-            filter(hour >= as.Date(Sys.time())) %>% 
-            group_by(hour, app, usr) %>% 
-            filter(Time == max(Time)) %>% 
-            slice(1) %>% 
-            ungroup %>% 
-            arrange(hour) %>% 
-            group_by(hour=floor_date(hour, "1 minute"),app) %>% 
-            dplyr::count() %>% 
-            ungroup %>% 
-            mutate(hour = datetime_to_timestamp(hour))    
-    })
-    
-    output$user_chart_today <- renderHighchart({
-        filter_user_data_today() %>% 
-            hchart(hcaes(x = hour, y = n, group = app), type = 'line') %>% 
-            hc_xAxis(type = 'datetime') %>% 
-            hc_tooltip(shared = TRUE) %>% 
-            hc_add_theme(hc_theme_smpl())
-    })
-    
+
+ui <- fluidPage(dataTableOutput("table"))
+
+server <- function(input,output,session){
+  values <- reactiveValues()
+  pollData <- reactivePoll(10000, session,
+                           checkFunc=function(){
+                             Sys.time()
+                           },
+                           valueFunc=function(){ 
+                             
+                             time <- Sys.time() -50
+                            
+                             tbl(con_hub, "vwTrade") %>% 
+                               filter(TradeTime >= time) %>% 
+                               arrange(desc(TradeTime)) %>%
+                               select(TradeTime, TradeId, TradedVolume) %>%
+                               collect()
+                             
+                      
+                             
+                           })
+  
+  output$table <- renderDataTable({ pollData()})
+  
+  observe({
+    values$selected <- pollData()$TradeTime[input$table_rows_selected]
+  })
+  
+  proxy = dataTableProxy('table')
+  observeEvent(pollData(),{
+    selectRows(proxy, which(pollData()$TradeTime %in% values$selected))
+  })
 }
 
-shinyApp(ui = ui, server = server)
+shinyApp(ui,server)
